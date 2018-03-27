@@ -1,19 +1,20 @@
 <?php
 /**
 * 邮件发送类
-* 支持发送纯文本邮件和HTML格式的邮件，可以多收件人，多抄送，多秘密抄送，带附件(单个或多个附件),支持到服务器的ssl连接
-* 需要的php扩展：sockets、Fileinfo和openssl。
+* 支持发送纯文本邮件和HTML格式的邮件，可以多收件人，多抄送，多秘密抄送，带单个或多个附件
+* 支持到服务器的SSL连接
+* 需要的PHP扩展：Socket、Fileinfo和OpenSSL
 * @example
 * $mail = new MySendMail();
-* $mail->setServer("XXXXX", "XXXXX@XXXXX", "XXXXX"); //设置smtp服务器
-* $mail->setServer("XXXXX", "XXXXX@XXXXX", "XXXXX", 465, true); //设置smtp服务器，到服务器的ssl连接
-* $mail->setFrom("XXXXX"); //设置发件人
-* $mail->setReceiver("XXXXX"); //设置收件人，多个收件人，调用多次
-* $mail->setCc("XXXX"); //设置抄送，多个抄送，调用多次
-* $mail->setBcc("XXXXX"); //设置秘密抄送，多个秘密抄送，调用多次
-* $mail->addAttachment("XXXX"); //添加附件，多个附件，调用多次
-* $mail->setMail("test", "<b>test</b>"); //设置邮件主题、内容
-* $mail->sendMail(); 发送
+* $mail->setServer("XXXXX", "XXXXX@XXXXX", "XXXXX");             //设置SMTP服务器
+* $mail->setServer("XXXXX", "XXXXX@XXXXX", "XXXXX", 465, true);  //设置SMTP服务器，到服务器的SSL连接
+* $mail->setFrom("XXXXX");                                       //设置发件人
+* $mail->setReceiver("XXXXX");                                   //设置收件人，多个收件人，调用多次
+* $mail->setCc("XXXX");                                          //设置抄送人，多个抄送人，调用多次
+* $mail->setBcc("XXXXX");                                        //设置秘送人，多个秘送人，调用多次
+* $mail->addAttachment("XXXX");                                  //添加附件，多个附件，调用多次
+* $mail->setMail("test", "<b>test</b>");                         //设置邮件主题、内容
+* $mail->sendMail();                                             //发送
 */
 class MySendMail {
     /**
@@ -83,7 +84,7 @@ class MySendMail {
     protected $_attachment;
  
     /**
-    * @var reource socket资源
+    * @var reource Socket资源
     * @access protected
     */
     protected $_socket;
@@ -100,14 +101,13 @@ class MySendMail {
     */
     protected $_errorMessage;
  
- 
     /**
     * 设置邮件传输代理，如果是可以匿名发送有邮件的服务器，只需传递代理服务器地址就行
     * @access public
-    * @param string $server 代理服务器的ip或者域名
+    * @param string $server 代理服务器的IP或者域名
     * @param string $username 认证账号
     * @param string $password 认证密码
-    * @param int $port 代理服务器的端口，smtp默认25号端口
+    * @param int $port 代理服务器的端口，SMTP默认25号端口
     * @param boolean $isSecurity 到服务器的连接是否为安全连接，默认false
     * @return boolean
     */
@@ -132,7 +132,7 @@ class MySendMail {
     }
  
     /**
-    * 设置收件人，多个收件人，调用多次.
+    * 设置收件人，多个收件人，调用多次
     * @access public
     * @param string $to 收件人地址
     * @return boolean
@@ -159,7 +159,7 @@ class MySendMail {
     }
  
     /**
-    * 设置抄送，多个抄送，调用多次.
+    * 设置抄送，多个抄送，调用多次
     * @access public
     * @param string $cc 抄送地址
     * @return boolean
@@ -275,8 +275,7 @@ class MySendMail {
                 return false;
             }
         }
-         
-        //其实这里也没必要关闭，smtp命令：QUIT发出之后，服务器就关闭了连接，本地的socket资源会自动释放
+        //其实这里也没必要关闭，SMTP令：QUIT发出之后，服务器就关闭了连接，本地的Socket资源会自动释放
         $this->_isSecurity ? $this->closeSecutity() : $this->close();
         return true;
     }
@@ -298,10 +297,10 @@ class MySendMail {
     * @return array
     */
     protected function getCommand() {
-        $separator = "----=_Part_" . md5($this->_from . time()) . uniqid(); //分隔符
+        $separator = "----=_Part_" . md5($this->_from . time()) . uniqid();  //分隔符
  
         $command = array(
-                array("HELO sendmail\r\n", 250)
+                array("HELLO sendmail\r\n", 250)
             );
         if(!empty($this->_userName)){
             $command[] = array("AUTH LOGIN\r\n", 334);
@@ -391,7 +390,7 @@ class MySendMail {
             $header .= "Content-Type: multipart/related;\r\n";
         }
         else{
-            //html或者纯文本的邮件声明成这个
+            //HTML或者纯文本的邮件声明成这个
             $header .= "Content-Type: multipart/alternative;\r\n";
         }
  
@@ -443,12 +442,12 @@ class MySendMail {
     /**
     * 发送命令
     * @access protected
-    * @param string $command 发送到服务器的smtp命令
+    * @param string $command 发送到服务器的SMTP命令
     * @param int $code 期望服务器返回的响应吗
     * @return boolean
     */
     protected function sendCommand($command, $code) {
-        echo 'Send command:' . $command . ',expected code:' . $code . '<br />';
+        echo 'Send command:' . $command . 'expected code:' . $code . '<br />';
         //发送命令给服务器
         try{
             if(socket_write($this->_socket, $command, strlen($command))){
@@ -489,12 +488,12 @@ class MySendMail {
     /**
     * 发送命令
     * @access protected
-    * @param string $command 发送到服务器的smtp命令
+    * @param string $command 发送到服务器的SMTP命令
     * @param int $code 期望服务器返回的响应吗
     * @return boolean
     */
     protected function sendCommandSecurity($command, $code) {
-        echo 'Send command:' . $command . ',expected code:' . $code . '<br />';
+        echo 'Send command:' . $command . 'expected code:' . $code . '<br />';
         try {
             if(fwrite($this->_socket, $command)){
                 //当邮件内容分多次发送时，没有$code，服务器没有返回
@@ -529,7 +528,7 @@ class MySendMail {
     } 
  
     /**
-    * 读取附件文件内容，返回base64编码后的文件内容
+    * 读取附件文件内容，返回BASE64编码后的文件内容
     * @access protected
     * @param string $file 文件
     * @return mixed
@@ -570,7 +569,7 @@ class MySendMail {
     * @return boolean
     */
     private function socket() {
-        //创建socket资源
+        //创建Socket资源
         $this->_socket = socket_create(AF_INET, SOCK_STREAM, getprotobyname('tcp'));
          
         if(!$this->_socket) {
@@ -607,7 +606,7 @@ class MySendMail {
             return false;
         }
  
-        //设置加密连接，默认是ssl，如果需要tls连接，可以查看php手册stream_socket_enable_crypto函数的解释
+        //设置加密连接，默认是SSL，如果需要TLS连接，可以查看PHP手册stream_socket_enable_crypto函数的解释
         stream_socket_enable_crypto($this->_socket, true, STREAM_CRYPTO_METHOD_SSLv23_CLIENT);
  
         stream_set_blocking($this->_socket, 1); //设置阻塞模式
@@ -621,7 +620,7 @@ class MySendMail {
     }
  
     /**
-    * 关闭socket
+    * 关闭Socket
     * @access private
     * @return boolean
     */
@@ -635,7 +634,7 @@ class MySendMail {
     }
  
     /**
-    * 关闭安全socket
+    * 关闭安全Socket
     * @access private
     * @return boolean
     */
